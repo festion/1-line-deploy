@@ -173,11 +173,11 @@ default_settings() {
         CORE_COUNT="$CORE_COUNT"
         RAM_SIZE="$RAM_SIZE"
         BRG="$BRG"
-        NET="192.168.1.200/24"
-        GATE="192.168.1.1"
+        NET="dhcp"
+        GATE=""
         MTU=""
         SD=""
-        NS="192.168.1.1"
+        NS=""
         MAC=""
         VLAN=""
         SSH="$SSH"
@@ -192,9 +192,7 @@ default_settings() {
         echo -e "${DGN}CPU Cores: ${BL}$CORE_COUNT${CL}"
         echo -e "${DGN}RAM: ${BL}$RAM_SIZE MB${CL}"
         echo -e "${DGN}Bridge: ${BL}$BRG${CL}"
-        echo -e "${DGN}Static IP: ${BL}$NET${CL}"
-        echo -e "${DGN}Gateway: ${BL}$GATE${CL}"
-        echo -e "${DGN}DNS: ${BL}$NS${CL}"
+        echo -e "${DGN}Network: ${BL}$NET${CL}"
         echo -e "${DGN}Mode: ${GN}CREATE${CL}"
     fi
 }
@@ -232,7 +230,7 @@ arch: amd64
 cores: $CORE_COUNT
 hostname: $HOSTNAME
 memory: $RAM_SIZE
-net0: name=eth0,bridge=$BRG,hwaddr=auto,ip=$NET,gw=$GATE,type=veth
+net0: name=eth0,bridge=$BRG,hwaddr=auto,ip=$NET,type=veth
 ostype: debian
 rootfs: local-lvm:$DISK_SIZE
 swap: 512
@@ -243,8 +241,7 @@ EOF
         # Create container
         pvesh create /nodes/$(hostname)/lxc -vmid $CTID -ostemplate local:vztmpl/$TEMPLATE -file $TEMP_DIR/container.conf >/dev/null 2>&1
         
-        # Configure DNS
-        lxc-attach -n $CTID -- bash -c "echo 'nameserver $NS' > /etc/resolv.conf"
+        # DNS will be configured via DHCP
         
         rm -rf $TEMP_DIR
         msg_ok "Created new LXC container"
@@ -491,8 +488,25 @@ build_container
 install_script
 
 # Final status
-IP=$(pct exec $CTID -- hostname -I | awk '{print $1}')
 msg_ok "Completed Successfully!"
-echo -e "${DGN}WikiJS Integration Service${CL} should be reachable at: ${BL}http://$IP${CL}"
-echo -e "${DGN}Health check: ${BL}http://$IP/health${CL}"
-echo -e "${DGN}Service status: ${BL}http://$IP/wiki-agent/status${CL}"
+
+# Wait a moment for DHCP to assign IP
+sleep 5
+IP=$(pct exec $CTID -- hostname -I | awk '{print $1}' 2>/dev/null || echo "check container networking")
+
+echo -e "${DGN}WikiJS Integration Service Details:${CL}"
+echo -e "${DGN}Container ID: ${BL}$CTID${CL}"
+if [[ "$IP" != "check container networking" && -n "$IP" ]]; then
+    echo -e "${DGN}IP Address: ${BL}$IP${CL}"
+    echo -e "${DGN}Main Service: ${BL}http://$IP/${CL}"
+    echo -e "${DGN}Health Check: ${BL}http://$IP/health${CL}"
+    echo -e "${DGN}Service Status: ${BL}http://$IP/wiki-agent/status${CL}"
+else
+    echo -e "${YW}IP Address: ${BL}Will be assigned by DHCP${CL}"
+    echo -e "${YW}Check container networking: ${BL}pct exec $CTID -- hostname -I${CL}"
+fi
+
+echo -e "\n${GN}Next Steps:${CL}"
+echo -e "1. ${DGN}Check service status: ${BL}pct exec $CTID -- systemctl status wikijs-integration${CL}"
+echo -e "2. ${DGN}View service logs: ${BL}pct exec $CTID -- journalctl -u wikijs-integration -f${CL}"
+echo -e "3. ${DGN}Container management: ${BL}pct start/stop/restart $CTID${CL}"

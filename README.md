@@ -24,13 +24,14 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/ma
 - **CPU:** 2 cores
 - **RAM:** 1GB
 - **Disk:** 4GB  
-- **Network:** Static IP (192.168.1.200/24)
+- **Network:** DHCP (auto-assigned IP)
+- **Container ID:** Auto-numbered (130+)
 - **OS:** Debian 12 LXC
 
 **Service Endpoints:**
-- **Main Service:** `http://192.168.1.200/`
-- **Health Check:** `http://192.168.1.200/health`
-- **Service Status:** `http://192.168.1.200/wiki-agent/status`
+- **Main Service:** `http://<container-ip>/`
+- **Health Check:** `http://<container-ip>/health`
+- **Service Status:** `http://<container-ip>/wiki-agent/status`
 
 ## 📋 Requirements
 
@@ -42,7 +43,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/ma
 
 1. **First Installation:** Run the one-line command on your Proxmox host
 2. **Updates:** Re-run the same command - it will detect existing containers and offer update options
-3. **Multiple Containers:** The script will find available container IDs automatically
+3. **Multiple Containers:** The script will find available container IDs automatically (starting from 130)
 
 ## 🛠️ Supported Operations
 
@@ -66,7 +67,7 @@ This script integrates with:
 │   Auditor       │───▶│   Integration   │───▶│   Container     │
 │   (Dashboard)   │    │   Service       │    │   (Wiki App)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-     192.168.1.58           192.168.1.200           192.168.1.90
+     192.168.1.58           <auto-dhcp-ip>          192.168.1.90
 ```
 
 ## 🤝 Contributing
