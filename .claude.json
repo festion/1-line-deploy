@@ -1,0 +1,84 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/dev/workspace/1-line-deploy"],
+      "description": "Local file system access for 1-line-deploy project"
+    },
+    "network-fs": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-network-fs"],
+      "description": "Network file system operations"
+    },
+    "serena-enhanced": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-labs/serena-enhanced-mcp"],
+      "description": "Advanced AI assistant with semantic code tools"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_bxLPKPtPzjzILxqYyRIxtYJzOEQ0aW4dEHT7"
+      },
+      "description": "GitHub repository management for festion organization"
+    },
+    "code-linter": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-labs/code-linter-mcp"],
+      "description": "Code quality and linting tools"
+    },
+    "directory-polling": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-labs/directory-polling-mcp", "/home/dev/workspace/1-line-deploy"],
+      "description": "File system monitoring for deployment scripts"
+    },
+    "home-assistant": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "--network", "host",
+        "-e", "HA_URL=http://192.168.1.10:8123",
+        "-e", "HA_TOKEN=",
+        "ghcr.io/home-assistant/mcp-server-homeassistant"
+      ],
+      "fallback": {
+        "command": "python",
+        "args": ["-m", "mcp_server_homeassistant"],
+        "env": {
+          "HA_URL": "http://192.168.1.10:8123",
+          "HA_TOKEN": ""
+        }
+      },
+      "description": "Home Assistant integration (Docker + Python fallback)"
+    },
+    "proxmox-mcp": {
+      "command": "python",
+      "args": ["-m", "proxmox_mcp_server"],
+      "env": {
+        "PROXMOX_HOST": "https://proxmox.homelab.local:8006",
+        "PROXMOX_USER": "api@pve",
+        "PROXMOX_TOKEN_ID": "",
+        "PROXMOX_TOKEN_SECRET": "",
+        "PROXMOX_VERIFY_SSL": "false"
+      },
+      "description": "Proxmox virtualization management"
+    },
+    "truenas": {
+      "command": "python",
+      "args": ["-m", "truenas_mcp_server"],
+      "env": {
+        "TRUENAS_HOST": "https://truenas.homelab.local",
+        "TRUENAS_API_KEY": "",
+        "TRUENAS_VERIFY_SSL": "false"
+      },
+      "description": "TrueNAS storage management"
+    }
+  },
+  "globalShortcuts": [
+    {
+      "key": "ctrl+shift+m",
+      "description": "Quick MCP server status check"
+    }
+  ]
+}
