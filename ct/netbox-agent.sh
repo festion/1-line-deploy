@@ -285,7 +285,16 @@ install_script() {
 set -euo pipefail
 
 # Update system
-apt-get update && apt-get upgrade -y
+apt-get update
+
+# Fix any broken nginx packages from previous installations
+if dpkg -l | grep -q "^.i.*nginx"; then
+    echo "Removing broken nginx packages from previous installation..."
+    apt-get remove --purge -y nginx nginx-common || true
+    apt-get autoremove -y || true
+fi
+
+apt-get upgrade -y
 
 # Install dependencies
 apt-get install -y curl sudo mc git sqlite3 python3 python3-pip python3-venv jq nmap
@@ -305,6 +314,38 @@ fi
 
 # Set up Python virtual environment
 sudo -u netbox-agent python3 -m venv venv
+
+# Create fallback requirements.txt if it doesn't exist
+if [ ! -f requirements.txt ]; then
+    echo "Creating fallback requirements.txt file..."
+    sudo -u netbox-agent cat > requirements.txt << 'REQUIREMENTS'
+# NetBox Agent Dependencies
+
+# Core dependencies
+requests>=2.31.0
+pydantic>=2.0.0
+schedule>=1.2.0
+python-dotenv>=1.0.0
+
+# Optional dependencies for various data sources
+pynetbox>=7.0.0  # NetBox Python API
+python-nmap>=0.7.1  # Network scanning
+homeassistant-api>=0.1.1  # Home Assistant integration
+
+# Development dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Logging and monitoring
+structlog>=23.0.0
+prometheus-client>=0.17.0
+REQUIREMENTS
+fi
+
+# Install Python dependencies
 sudo -u netbox-agent bash -c "source venv/bin/activate && pip install -r requirements.txt"
 
 # Create production configuration
