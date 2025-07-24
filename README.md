@@ -33,11 +33,49 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/ma
 - **Health Check:** `http://<container-ip>/health`
 - **Service Status:** `http://<container-ip>/wiki-agent/status`
 
+### NetBox Agent Container
+
+Deploy a production-ready NetBox Agent for automated infrastructure discovery and population.
+
+**One-line deployment:**
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/main/ct/netbox-agent.sh)"
+```
+
+**Features:**
+- ✅ **Smart Container Detection** - Automatically detects existing containers
+- ✅ **Update/Create Modes** - Updates existing installations or creates new containers
+- ✅ **Production Ready** - Python 3, systemd service, nginx reverse proxy
+- ✅ **Multi-Source Discovery** - Home Assistant, network scanning, filesystem monitoring
+- ✅ **Health Monitoring** - Built-in health checks and status endpoints
+- ✅ **MCP Integration** - Model Context Protocol server support
+
+**Container Specifications:**
+- **CPU:** 2 cores
+- **RAM:** 2GB
+- **Disk:** 8GB
+- **Network:** DHCP (auto-assigned IP)
+- **Container ID:** Auto-numbered (140+)
+- **OS:** Debian 12 LXC
+
+**Service Endpoints:**
+- **Health Check:** `http://<container-ip>/health`
+- **Service Status:** `http://<container-ip>/status`
+
+**Data Sources:**
+- **Home Assistant** - IoT devices, sensors, network entities
+- **Network Scanning** - Automated device discovery via nmap
+- **Filesystem** - Configuration file parsing and monitoring
+- **Proxmox** - VM and container inventory (optional)
+- **TrueNAS** - Storage systems and shares (optional)
+
 ## 📋 Requirements
 
 - Proxmox VE 8.0 or later
 - Internet connection for downloading templates and dependencies
-- Sufficient resources (2 CPU cores, 1GB RAM, 4GB disk space)
+- Sufficient resources:
+  - **WikiJS Integration:** 2 CPU cores, 1GB RAM, 4GB disk space
+  - **NetBox Agent:** 2 CPU cores, 2GB RAM, 8GB disk space
 
 ## 🔄 Usage Instructions
 
@@ -47,16 +85,18 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/ma
 
 ## 🛠️ Supported Operations
 
-- **Fresh Installation** - Creates new container with WikiJS integration
+- **Fresh Installation** - Creates new containers with service deployments
 - **In-place Updates** - Updates existing installations while preserving data
 - **Configuration Management** - Maintains production environment settings
 - **Service Management** - Automatic systemd service setup and management
 
 ## 🔗 Integration
 
-This script integrates with:
+These deployments integrate with:
 - **WikiJS** (192.168.1.90:3000) - Document management system
 - **GitOps Auditor** - Repository monitoring and documentation sync
+- **NetBox** - Network infrastructure documentation and IPAM
+- **Home Assistant** - IoT device management and automation
 - **Proxmox VE** - Container lifecycle management
 
 ## 📊 Architecture
@@ -97,8 +137,9 @@ For issues, feature requests, or contributions:
 cd 1-line-deploy
 python3 -m http.server 8080
 
-# Test deployment
+# Test deployments
 bash -c "$(curl -fsSL http://localhost:8080/ct/wikijs-integration.sh)"
+bash -c "$(curl -fsSL http://localhost:8080/ct/netbox-agent.sh)"
 ```
 
 ### Adding New Deployments
