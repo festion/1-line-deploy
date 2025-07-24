@@ -231,27 +231,20 @@ build_container() {
             fi
         fi
         
-        # Container configuration
-        TEMP_DIR=$(mktemp -d)
-        cat > $TEMP_DIR/container.conf << EOF
-arch: amd64
-cores: $CORE_COUNT
-hostname: $HOSTNAME
-memory: $RAM_SIZE
-net0: name=eth0,bridge=$BRG,hwaddr=auto,ip=$NET,type=veth
-ostype: debian
-rootfs: local-lvm:$DISK_SIZE
-swap: 1024
-tags: netbox;agent;python;automation;infrastructure
-unprivileged: 1
-EOF
-        
         # Create container
-        if pvesh create /nodes/$(hostname)/lxc -vmid $CTID -ostemplate local:vztmpl/$TEMPLATE -file $TEMP_DIR/container.conf; then
-            rm -rf $TEMP_DIR
+        if pct create $CTID local:vztmpl/$TEMPLATE \
+            --arch amd64 \
+            --cores $CORE_COUNT \
+            --hostname $HOSTNAME \
+            --memory $RAM_SIZE \
+            --net0 name=eth0,bridge=$BRG,hwaddr=auto,ip=$NET,type=veth \
+            --ostype debian \
+            --rootfs local-lvm:$DISK_SIZE \
+            --swap 1024 \
+            --tags "netbox;agent;python;automation;infrastructure" \
+            --unprivileged 1; then
             msg_ok "Created new LXC container"
         else
-            rm -rf $TEMP_DIR
             msg_error "Failed to create LXC container"
             echo -e "${RD}Container creation failed. Please check:${CL}"
             echo -e "- Available storage space"

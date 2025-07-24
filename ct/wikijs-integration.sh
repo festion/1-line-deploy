@@ -219,32 +219,40 @@ build_container() {
         TEMPLATE="debian-12-standard_12.7-1_amd64.tar.zst"
         if ! pveam list local | grep -q "$TEMPLATE"; then
             msg_info "Downloading $TEMPLATE"
-            pveam download local $TEMPLATE >/dev/null 2>&1
-            msg_ok "Downloaded $TEMPLATE"
+            if pveam download local $TEMPLATE; then
+                msg_ok "Downloaded $TEMPLATE"
+            else
+                msg_error "Failed to download template $TEMPLATE"
+                echo -e "${RD}Template download failed. Please check:${CL}"
+                echo -e "- Internet connectivity"
+                echo -e "- Available storage space"
+                echo -e "- Proxmox template repository access"
+                exit 1
+            fi
         fi
         
-        # Container configuration
-        TEMP_DIR=$(mktemp -d)
-        cat > $TEMP_DIR/container.conf << EOF
-arch: amd64
-cores: $CORE_COUNT
-hostname: $HOSTNAME
-memory: $RAM_SIZE
-net0: name=eth0,bridge=$BRG,hwaddr=auto,ip=$NET,type=veth
-ostype: debian
-rootfs: local-lvm:$DISK_SIZE
-swap: 512
-tags: gitops;integration;nodejs;wikijs;production
-unprivileged: 1
-EOF
-        
         # Create container
-        pvesh create /nodes/$(hostname)/lxc -vmid $CTID -ostemplate local:vztmpl/$TEMPLATE -file $TEMP_DIR/container.conf >/dev/null 2>&1
-        
-        # DNS will be configured via DHCP
-        
-        rm -rf $TEMP_DIR
-        msg_ok "Created new LXC container"
+        if pct create $CTID local:vztmpl/$TEMPLATE \
+            --arch amd64 \
+            --cores $CORE_COUNT \
+            --hostname $HOSTNAME \
+            --memory $RAM_SIZE \
+            --net0 name=eth0,bridge=$BRG,hwaddr=auto,ip=$NET,type=veth \
+            --ostype debian \
+            --rootfs local-lvm:$DISK_SIZE \
+            --swap 512 \
+            --tags "gitops;integration;nodejs;wikijs;production" \
+            --unprivileged 1; then
+            msg_ok "Created new LXC container"
+        else
+            msg_error "Failed to create LXC container"
+            echo -e "${RD}Container creation failed. Please check:${CL}"
+            echo -e "- Available storage space"
+            echo -e "- Template availability: $TEMPLATE"
+            echo -e "- Container ID $CTID not already in use"
+            echo -e "- Network bridge $BRG exists"
+            exit 1
+        fi
     fi
 }
 
