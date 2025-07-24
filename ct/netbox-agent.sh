@@ -313,7 +313,24 @@ else
 fi
 
 # Set up Python virtual environment
+# Remove existing virtual environment if it exists (in case it's corrupted)
+if [ -d "venv" ]; then
+    echo "Removing existing virtual environment..."
+    rm -rf venv
+fi
+
+echo "Creating fresh Python virtual environment..."
 sudo -u netbox-agent python3 -m venv venv
+
+# Verify virtual environment was created successfully
+if [ ! -f "venv/bin/python" ]; then
+    echo "ERROR: Virtual environment creation failed"
+    exit 1
+fi
+
+# Upgrade pip in virtual environment
+echo "Upgrading pip in virtual environment..."
+sudo -u netbox-agent venv/bin/python -m pip install --upgrade pip
 
 # Create fallback requirements.txt if it doesn't exist
 if [ ! -f requirements.txt ]; then
@@ -345,8 +362,9 @@ prometheus-client>=0.17.0
 REQUIREMENTS
 fi
 
-# Install Python dependencies
-sudo -u netbox-agent bash -c "source venv/bin/activate && pip install -r requirements.txt"
+# Install Python dependencies using the full path to pip
+echo "Installing Python dependencies..."
+sudo -u netbox-agent venv/bin/python -m pip install -r requirements.txt
 
 # Create production configuration
 sudo -u netbox-agent mkdir -p config logs
