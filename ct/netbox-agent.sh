@@ -288,7 +288,7 @@ set -euo pipefail
 apt-get update && apt-get upgrade -y
 
 # Install dependencies
-apt-get install -y curl sudo mc git sqlite3 nginx python3 python3-pip python3-venv jq nmap
+apt-get install -y curl sudo mc git sqlite3 python3 python3-pip python3-venv jq nmap
 
 # Create netbox-agent user
 useradd -r -s /bin/bash -d /opt/netbox-agent netbox-agent || true
@@ -487,40 +487,8 @@ systemctl daemon-reload
 systemctl enable netbox-agent-health
 systemctl start netbox-agent-health
 
-# Configure nginx reverse proxy
-cat > /etc/nginx/sites-available/netbox-agent << 'NGINX'
-server {
-    listen 80;
-    server_name _;
-    
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-    
-    location /health {
-        proxy_pass http://localhost:8080/health;
-        access_log off;
-    }
-    
-    location /status {
-        proxy_pass http://localhost:8080/status;
-        access_log off;
-    }
-}
-NGINX
-
-ln -sf /etc/nginx/sites-available/netbox-agent /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-systemctl enable nginx
-systemctl restart nginx
+# Note: This service runs on port 8080 and should be proxied through
+# the centralized Nginx Proxy Manager instead of running its own nginx instance
 
 # Clean up
 apt-get autoremove -y
@@ -560,8 +528,9 @@ echo -e "${DGN}NetBox Agent Service Details:${CL}"
 echo -e "${DGN}Container ID: ${BL}$CTID${CL}"
 if [[ "$IP" != "check container networking" && -n "$IP" ]]; then
     echo -e "${DGN}IP Address: ${BL}$IP${CL}"
-    echo -e "${DGN}Health Check: ${BL}http://$IP/health${CL}"
-    echo -e "${DGN}Service Status: ${BL}http://$IP/status${CL}"
+    echo -e "${DGN}Health Check: ${BL}http://$IP:8080/health${CL}"
+    echo -e "${DGN}Service Status: ${BL}http://$IP:8080/status${CL}"
+    echo -e "${YW}Note: Configure this service in Nginx Proxy Manager for external access${CL}"
 else
     echo -e "${YW}IP Address: ${BL}Will be assigned by DHCP${CL}"
     echo -e "${YW}Check container networking: ${BL}pct exec $CTID -- hostname -I${CL}"
@@ -571,9 +540,10 @@ echo -e "\n${GN}Next Steps:${CL}"
 echo -e "1. ${DGN}Configure NetBox settings: ${BL}pct exec $CTID -- nano /opt/netbox-agent/config/netbox-agent.json${CL}"
 echo -e "2. ${DGN}Update environment file: ${BL}pct exec $CTID -- nano /opt/netbox-agent/.env${CL}"
 echo -e "3. ${DGN}Start NetBox Agent: ${BL}pct exec $CTID -- systemctl start netbox-agent${CL}"
-echo -e "4. ${DGN}Check service status: ${BL}pct exec $CTID -- systemctl status netbox-agent${CL}"
-echo -e "5. ${DGN}View service logs: ${BL}pct exec $CTID -- journalctl -u netbox-agent -f${CL}"
-echo -e "6. ${DGN}Container management: ${BL}pct start/stop/restart $CTID${CL}"
+echo -e "4. ${DGN}Add to Nginx Proxy Manager: Forward $IP:8080 for external access${CL}"
+echo -e "5. ${DGN}Check service status: ${BL}pct exec $CTID -- systemctl status netbox-agent${CL}"
+echo -e "6. ${DGN}View service logs: ${BL}pct exec $CTID -- journalctl -u netbox-agent -f${CL}"
+echo -e "7. ${DGN}Container management: ${BL}pct start/stop/restart $CTID${CL}"
 
 echo -e "\n${YW}Configuration Notes:${CL}"
 echo -e "- ${DGN}Update NetBox URL and API token in config/netbox-agent.json${CL}"

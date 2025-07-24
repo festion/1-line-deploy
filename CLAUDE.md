@@ -73,8 +73,19 @@ pct start/stop/restart <container-id>
 
 - **WikiJS**: Connects to WikiJS instance at 192.168.1.90:3000
 - **GitOps Auditor**: Integrates with homelab GitOps auditing system
+- **Nginx Proxy Manager**: Centralized reverse proxy for all external access
 - **Proxmox VE**: Requires PVE 8.0+ for container management
 - **DHCP Networking**: Uses automatic IP assignment via vmbr0 bridge
+
+## Network Architecture
+
+**Important**: All services use a centralized Nginx Proxy Manager for external access:
+
+- **NetBox Agent**: Runs internally on port 8080
+- **WikiJS Integration**: Runs internally on port 3001
+- **No individual nginx instances**: Services are designed to work with centralized proxy
+- **External routing**: All handled through standalone Nginx Proxy Manager server
+- **Internal communication**: Direct container IP:port communication
 
 ## Environment Configuration
 

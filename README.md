@@ -97,7 +97,18 @@ These deployments integrate with:
 - **GitOps Auditor** - Repository monitoring and documentation sync
 - **NetBox** - Network infrastructure documentation and IPAM
 - **Home Assistant** - IoT device management and automation
+- **Nginx Proxy Manager** - Centralized reverse proxy for all services
 - **Proxmox VE** - Container lifecycle management
+
+## 🌐 Network Architecture
+
+All deployed services use a **centralized Nginx Proxy Manager** for external access:
+
+- **NetBox Agent** - Runs on port `8080`, proxy via NPM for external access
+- **WikiJS Integration** - Runs on port `3001`, proxy via NPM for external access
+- **No individual nginx instances** - Services are configured to work with the centralized proxy
+- **Internal communication** - Services communicate directly via container IPs and ports
+- **External access** - All external routing handled through Nginx Proxy Manager
 
 ## 📊 Architecture
 

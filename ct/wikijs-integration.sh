@@ -295,7 +295,7 @@ set -euo pipefail
 apt-get update && apt-get upgrade -y
 
 # Install dependencies
-apt-get install -y curl sudo mc git sqlite3 nginx
+apt-get install -y curl sudo mc git sqlite3
 
 # Install Node.js 20
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
@@ -438,36 +438,8 @@ SYSTEMD
 systemctl daemon-reload
 systemctl enable wikijs-integration
 
-# Configure nginx reverse proxy
-cat > /etc/nginx/sites-available/wikijs-integration << 'NGINX'
-server {
-    listen 80;
-    server_name _;
-    
-    location / {
-        proxy_pass http://localhost:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-    
-    location /health {
-        access_log off;
-        return 200 "healthy\n";
-        add_header Content-Type text/plain;
-    }
-}
-NGINX
-
-ln -sf /etc/nginx/sites-available/wikijs-integration /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-systemctl enable nginx
-systemctl restart nginx
+# Note: This service runs on port 3001 and should be proxied through
+# the centralized Nginx Proxy Manager instead of running its own nginx instance
 
 # Initialize SQLite database
 sudo -u wikijs-integration sqlite3 /opt/wikijs-integration/wiki-agent.db "PRAGMA user_version = 1;"
@@ -506,15 +478,17 @@ echo -e "${DGN}WikiJS Integration Service Details:${CL}"
 echo -e "${DGN}Container ID: ${BL}$CTID${CL}"
 if [[ "$IP" != "check container networking" && -n "$IP" ]]; then
     echo -e "${DGN}IP Address: ${BL}$IP${CL}"
-    echo -e "${DGN}Main Service: ${BL}http://$IP/${CL}"
-    echo -e "${DGN}Health Check: ${BL}http://$IP/health${CL}"
-    echo -e "${DGN}Service Status: ${BL}http://$IP/wiki-agent/status${CL}"
+    echo -e "${DGN}Main Service: ${BL}http://$IP:3001/${CL}"
+    echo -e "${DGN}Health Check: ${BL}http://$IP:3001/health${CL}"
+    echo -e "${DGN}Service Status: ${BL}http://$IP:3001/wiki-agent/status${CL}"
+    echo -e "${YW}Note: Configure this service in Nginx Proxy Manager for external access${CL}"
 else
     echo -e "${YW}IP Address: ${BL}Will be assigned by DHCP${CL}"
     echo -e "${YW}Check container networking: ${BL}pct exec $CTID -- hostname -I${CL}"
 fi
 
 echo -e "\n${GN}Next Steps:${CL}"
-echo -e "1. ${DGN}Check service status: ${BL}pct exec $CTID -- systemctl status wikijs-integration${CL}"
-echo -e "2. ${DGN}View service logs: ${BL}pct exec $CTID -- journalctl -u wikijs-integration -f${CL}"
-echo -e "3. ${DGN}Container management: ${BL}pct start/stop/restart $CTID${CL}"
+echo -e "1. ${DGN}Add to Nginx Proxy Manager: Forward $IP:3001 for external access${CL}"
+echo -e "2. ${DGN}Check service status: ${BL}pct exec $CTID -- systemctl status wikijs-integration${CL}"
+echo -e "3. ${DGN}View service logs: ${BL}pct exec $CTID -- journalctl -u wikijs-integration -f${CL}"
+echo -e "4. ${DGN}Container management: ${BL}pct start/stop/restart $CTID${CL}"
