@@ -237,7 +237,7 @@ build_container() {
             --cores $CORE_COUNT \
             --hostname $HOSTNAME \
             --memory $RAM_SIZE \
-            --net0 name=eth0,bridge=$BRG,hwaddr=auto,ip=$NET,type=veth \
+            --net0 name=eth0,bridge=$BRG,ip=$NET,type=veth \
             --ostype debian \
             --rootfs local-lvm:$DISK_SIZE \
             --swap 1024 \
