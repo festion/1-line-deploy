@@ -4,6 +4,41 @@ One-line deployment scripts for homelab infrastructure components. Deploy produc
 
 ## 🚀 Available Deployments
 
+### Homepage Dashboard Container
+
+Deploy a production-ready Homepage dashboard for your homelab services and VMs.
+
+**One-line deployment:**
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/main/ct/homepage.sh)"
+```
+
+**Features:**
+- ✅ **Smart Container Detection** - Automatically detects existing containers
+- ✅ **Update/Create Modes** - Updates existing installations or creates new containers
+- ✅ **Production Ready** - Node.js 20, pnpm, systemd service
+- ✅ **Modern UI** - Beautiful, customizable dashboard with dark mode
+- ✅ **Service Integration** - Built-in widgets for Docker, Proxmox, monitoring services
+- ✅ **Open Source** - Fully open source and actively maintained
+
+**Container Specifications:**
+- **CPU:** 2 cores
+- **RAM:** 2GB
+- **Disk:** 8GB
+- **Network:** DHCP (auto-assigned IP)
+- **Container ID:** Auto-numbered (150+)
+- **OS:** Debian 12 LXC
+
+**Service Endpoints:**
+- **Dashboard:** `http://<container-ip>:3000`
+
+**Integration Support:**
+- **Proxmox** - VM/container stats and monitoring
+- **Uptime Kuma** - Service status monitoring
+- **Docker** - Container stats and management
+- **Weather, Calendar** - Built-in widgets
+- **Custom Services** - Easy YAML configuration
+
 ### WikiJS Integration Container
 
 Deploy a production-ready WikiJS integration service for GitOps document management.
@@ -74,6 +109,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/ma
 - Proxmox VE 8.0 or later
 - Internet connection for downloading templates and dependencies
 - Sufficient resources:
+  - **Homepage Dashboard:** 2 CPU cores, 2GB RAM, 8GB disk space
   - **WikiJS Integration:** 2 CPU cores, 1GB RAM, 4GB disk space
   - **NetBox Agent:** 2 CPU cores, 2GB RAM, 8GB disk space
 
@@ -93,22 +129,26 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/ma
 ## 🔗 Integration
 
 These deployments integrate with:
+- **Homepage Dashboard** - Centralized service launcher and dashboard
 - **WikiJS** (192.168.1.90:3000) - Document management system
 - **GitOps Auditor** - Repository monitoring and documentation sync
 - **NetBox** - Network infrastructure documentation and IPAM
 - **Home Assistant** - IoT device management and automation
 - **Nginx Proxy Manager** - Centralized reverse proxy for all services
+- **Traefik** - Modern reverse proxy with SSL/TLS support
 - **Proxmox VE** - Container lifecycle management
 
 ## 🌐 Network Architecture
 
-All deployed services use a **centralized Nginx Proxy Manager** for external access:
+All deployed services use a **centralized reverse proxy** (Nginx Proxy Manager or Traefik) for external access:
 
+- **Homepage Dashboard** - Runs on port `3000`, proxy via NPM/Traefik for external access with SSL
 - **NetBox Agent** - Runs on port `8080`, proxy via NPM for external access
 - **WikiJS Integration** - Runs on port `3001`, proxy via NPM for external access
 - **No individual nginx instances** - Services are configured to work with the centralized proxy
 - **Internal communication** - Services communicate directly via container IPs and ports
-- **External access** - All external routing handled through Nginx Proxy Manager
+- **External access** - All external routing handled through centralized reverse proxy
+- **SSL/TLS** - Handled by reverse proxy with Let's Encrypt or custom certificates
 
 ## 📊 Architecture
 
@@ -149,6 +189,7 @@ cd 1-line-deploy
 python3 -m http.server 8080
 
 # Test deployments
+bash -c "$(curl -fsSL http://localhost:8080/ct/homepage.sh)"
 bash -c "$(curl -fsSL http://localhost:8080/ct/wikijs-integration.sh)"
 bash -c "$(curl -fsSL http://localhost:8080/ct/netbox-agent.sh)"
 ```
