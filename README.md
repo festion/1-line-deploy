@@ -104,6 +104,49 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/ma
 - **Proxmox** - VM and container inventory (optional)
 - **TrueNAS** - Storage systems and shares (optional)
 
+### Proxmox Agent Dashboard
+
+Deploy a production-ready Proxmox cluster monitoring dashboard with real-time metrics and alerts.
+
+**One-line deployment:**
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/main/ct/proxmox-agent.sh)"
+```
+
+**Features:**
+- ✅ **Smart Container Detection** - Automatically detects existing containers
+- ✅ **Update/Create Modes** - Updates existing installations or creates new containers
+- ✅ **Real-time Monitoring** - WebSocket-based live updates across all cluster nodes
+- ✅ **Alert Management** - View, acknowledge, and manage cluster alerts
+- ✅ **Automated Remediation** - Intelligent load balancing and resource optimization
+- ✅ **Multi-Node Support** - Monitors 3-node Proxmox cluster (expandable)
+- ✅ **Modern UI** - Dark theme responsive interface with live metrics
+
+**Container Specifications:**
+- **CPU:** 2 cores
+- **RAM:** 2GB
+- **Disk:** 8GB
+- **Network:** DHCP (auto-assigned IP)
+- **Container ID:** Auto-numbered (150+)
+- **OS:** Debian 12 LXC
+
+**Service Endpoints:**
+- **Dashboard:** `http://<container-ip>`
+- **API Docs:** `http://<container-ip>/docs`
+- **Health Check:** `http://<container-ip>/api/health`
+
+**Cluster Nodes:**
+- **proxmox** (192.168.1.137) - Intel N100, 4c/4t (Primary)
+- **proxmox2** (192.168.1.125) - Intel i7-6700, 4c/8t (Worker)
+- **proxmox3** (192.168.1.126) - Intel i7-6700, 4c/8t (Worker)
+
+**Monitoring Features:**
+- **Cluster Status** - Nodes online/offline, quorum status
+- **Resource Metrics** - CPU, memory, disk, load averages per node
+- **Alert System** - Warning/critical thresholds with automated actions
+- **Load Balancing** - Recommendations for VM/container migration
+- **High Availability** - Quorum monitoring and failover support
+
 ## 📋 Requirements
 
 - Proxmox VE 8.0 or later
@@ -112,6 +155,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/ma
   - **Homepage Dashboard:** 2 CPU cores, 2GB RAM, 8GB disk space
   - **WikiJS Integration:** 2 CPU cores, 1GB RAM, 4GB disk space
   - **NetBox Agent:** 2 CPU cores, 2GB RAM, 8GB disk space
+  - **Proxmox Agent Dashboard:** 2 CPU cores, 2GB RAM, 8GB disk space
 
 ## 🔄 Usage Instructions
 
@@ -130,22 +174,25 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/festion/1-line-deploy/ma
 
 These deployments integrate with:
 - **Homepage Dashboard** - Centralized service launcher and dashboard
+- **Proxmox Agent Dashboard** - Cluster monitoring and management
 - **WikiJS** (192.168.1.90:3000) - Document management system
 - **GitOps Auditor** - Repository monitoring and documentation sync
 - **NetBox** - Network infrastructure documentation and IPAM
 - **Home Assistant** - IoT device management and automation
 - **Nginx Proxy Manager** - Centralized reverse proxy for all services
 - **Traefik** - Modern reverse proxy with SSL/TLS support
-- **Proxmox VE** - Container lifecycle management
+- **Proxmox VE** - Container lifecycle management and monitoring
+- **Uptime Kuma** - Service monitoring and alerting
 
 ## 🌐 Network Architecture
 
 All deployed services use a **centralized reverse proxy** (Nginx Proxy Manager or Traefik) for external access:
 
 - **Homepage Dashboard** - Runs on port `3000`, proxy via NPM/Traefik for external access with SSL
+- **Proxmox Agent Dashboard** - Runs on port `80`, proxy via Traefik for external access with SSL
 - **NetBox Agent** - Runs on port `8080`, proxy via NPM for external access
 - **WikiJS Integration** - Runs on port `3001`, proxy via NPM for external access
-- **No individual nginx instances** - Services are configured to work with the centralized proxy
+- **No individual nginx instances** - Services are configured to work with the centralized proxy (except Proxmox Agent which has nginx for local routing)
 - **Internal communication** - Services communicate directly via container IPs and ports
 - **External access** - All external routing handled through centralized reverse proxy
 - **SSL/TLS** - Handled by reverse proxy with Let's Encrypt or custom certificates
@@ -192,6 +239,7 @@ python3 -m http.server 8080
 bash -c "$(curl -fsSL http://localhost:8080/ct/homepage.sh)"
 bash -c "$(curl -fsSL http://localhost:8080/ct/wikijs-integration.sh)"
 bash -c "$(curl -fsSL http://localhost:8080/ct/netbox-agent.sh)"
+bash -c "$(curl -fsSL http://localhost:8080/ct/proxmox-agent.sh)"
 ```
 
 ### Adding New Deployments

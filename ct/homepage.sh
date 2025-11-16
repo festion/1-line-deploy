@@ -154,27 +154,17 @@ create_container() {
 
     TEMPLATE="${TEMPLATES[-1]}"
 
-    msg_info "Downloading LXC template"
-    pveam download local $TEMPLATE >/dev/null 2>&1 || {
-        msg_error "Failed to download template"
-        exit 1
-    }
-    msg_ok "Downloaded LXC template"
-
-    STORAGE_TYPE=$(pvesm status -storage local | awk 'NR>1 {print $2}')
-    case $STORAGE_TYPE in
-        dir|nfs)
-            DISK_EXT=".raw"
-            DISK_REF="local:${CT_ID}/vm-${CT_ID}-disk-0${DISK_EXT}"
-            ;;
-        lvmthin|rbd)
-            DISK_EXT=""
-            DISK_REF="local:vm-${CT_ID}-disk-0"
-            ;;
-    esac
+    msg_info "Downloading LXC template (if needed)"
+    if ! pveam list local | grep -q "$TEMPLATE"; then
+        pveam download local $TEMPLATE >/dev/null 2>&1 || {
+            msg_error "Failed to download template"
+            exit 1
+        }
+    fi
+    msg_ok "Template ready"
 
     msg_info "Creating LXC container"
-    pct create $CT_ID local:vztmpl/${TEMPLATE} \
+    if ! pct create $CT_ID local:vztmpl/${TEMPLATE} \
         -hostname $CT_HOSTNAME \
         -cores $CORE_COUNT \
         -memory $RAM_SIZE \
@@ -182,7 +172,22 @@ create_container() {
         -storage local \
         -rootfs local:${DISK_SIZE} \
         -unprivileged 1 \
-        -features nesting=1 >/dev/null 2>&1
+        -features nesting=1 2>&1; then
+        msg_error "Failed to create LXC container"
+        echo -e "\nTrying with alternate storage configuration..."
+        # Try with local-lvm if local fails
+        pct create $CT_ID local:vztmpl/${TEMPLATE} \
+            -hostname $CT_HOSTNAME \
+            -cores $CORE_COUNT \
+            -memory $RAM_SIZE \
+            -net0 name=eth0,bridge=$BRG,ip=$NET \
+            -rootfs local-lvm:${DISK_SIZE} \
+            -unprivileged 1 \
+            -features nesting=1 || {
+            msg_error "Failed to create container with both storage options"
+            exit 1
+        }
+    fi
     msg_ok "Created LXC container ${CT_ID}"
 }
 
@@ -321,6 +326,7 @@ Restart=on-failure
 RestartSec=10
 Environment=NODE_ENV=production
 Environment=PORT=3000
+Environment=HOMEPAGE_ALLOWED_HOSTS=*
 
 [Install]
 WantedBy=multi-user.target
