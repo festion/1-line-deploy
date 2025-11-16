@@ -76,7 +76,7 @@ msg_error() {
 
 start_routine() {
     if command -v pveversion >/dev/null 2>&1; then
-        if ! pveversion | grep -Eq "pve-manager/(8\.[0-9])"; then
+        if ! pveversion | grep -Eq "pve-manager/[8-9]|pve-manager/[1-9][0-9]"; then
             msg_error "This version of Proxmox Virtual Environment is not supported"
             echo -en "\n Please use Proxmox VE 8.0 or later"
             exit 1
